@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.direct.dao.IStudentDao">
+	<resultMap type="studentInfo" id="stuMap">
+		<id column="sid" property="sid"/>
+		<result column="sname" property="sname"/>
+		<result column="sex" property="sex"/>
+		<result column="age" property="age"/>
+		<result column="address" property="address"/>
+		<association property="cinfo" javaType="classInfo">
+			<id column="cid" property="cid"/>
+			<result column="cname" property="cname"/>
+		</association>
+	</resultMap>
+
+	<select id="selectStu" resultMap="stuMap">
+		select * from studentinfo si inner join classinfo ci on si.cid=ci.cid
+	</select>
+	<select id="selectStu1" resultMap="stuMap">
+		select * from studentinfo si inner join classinfo ci on si.cid=ci.cid
+	</select>
+	<select id="selectStuCount" resultType="int">
+		select count(1) from studentinfo si inner join classinfo ci on si.cid=ci.cid
+	</select>
+	
+	<insert id="insertStu" parameterType="studentInfo">
+		insert into studentinfo
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="sname!=null">sname,</if>
+			<if test="age!=0">age,</if>
+			<if test="sex!=null">sex,</if>
+			<if test="address!=null">address,</if>
+			<if test="cinfo!=null and cinfo.cid!=0">cid</if>
+		</trim> values
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="sname!=null">#{sname},</if>
+			<if test="age!=0">#{age},</if>
+			<if test="sex!=null">#{sex},</if>
+			<if test="address!=null">#{address},</if>
+			<if test="cinfo!=null and cinfo.cid!=0">#{cinfo.cid}</if>
+		</trim>
+	</insert>
+</mapper>

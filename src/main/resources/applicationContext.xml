@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+	<!-- 扫描业务层所在包 -->
+	<context:component-scan base-package="com.direct.service.impl" />
+
+	<!-- 配置Druid数据源连接池对象 -->
+	<context:property-placeholder location="classpath:druid.properties"/>
+	<!-- 
+	<bean id="ds" class="com.alibaba.druid.pool.DruidDataSource">
+		<property name="username" value="${user}" />
+		<property name="password" value="${pwd}" />
+		<property name="url" value="${url}" />
+		<property name="driverClassName" value="${driverName}" />
+		<property name="initialSize" value="${initSize}" />
+		<property name="maxActive" value="${maxActive}" />
+		<property name="minIdle" value="${minIdle}" />
+		<property name="maxWait" value="${maxWait}" />
+	</bean>
+	 -->
+	<!-- 配置MyBatis默认使用的连接池对象 -->
+	<bean id="ds" class="org.apache.ibatis.datasource.pooled.PooledDataSource">
+		<property name="username" value="${user}" />
+		<property name="password" value="${pwd}" />
+		<property name="url" value="${url}" />
+		<property name="driver" value="${driverName}" />
+		<property name="poolMaximumActiveConnections" value="${maxActive}"/>
+		<property name="poolMaximumIdleConnections" value="${minIdle}"/>
+	</bean>
+	
+	<!-- 配置MyBatis的SqlSessionFactory工厂对象并注入数据源和配置文件 -->
+	<bean id="factory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="ds" />
+		<!-- 可以替代mybatis配置文件的typeAliases，为指定包下的类取别名(默认为类名称) -->
+		<!-- <property name="typeAliasesPackage" value="com.direct.entity" /> -->
+		<!-- 可以替代mybatis配置文件的mappers，关联所有的dao接口映射文件 -->
+		<property name="mapperLocations" value="classpath:mapper/*.xml" />
+		<property name="plugins">
+			<array>
+				<bean class="com.github.pagehelper.PageInterceptor" />
+			</array>
+		</property>
+		<property name="configLocation" value="classpath:mybatis-config.xml" />
+	</bean>
+	<!-- 扫描dao接口类所在的包：Spring自动查找指定包下的类(为了将dao接口的映射器加载到容器中) -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.direct.dao" />
+		<property name="sqlSessionFactoryBeanName" value="factory" />
+	</bean>
+	
+	<!-- 事务管理 -->
+	<bean id="dstm" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="ds" />
+	</bean>
+	<tx:advice id="advice" transaction-manager="dstm">
+		<tx:attributes>
+			<tx:method name="add*" propagation="REQUIRED" isolation="READ_COMMITTED"/>
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<aop:pointcut expression="execution(* com.direct.service.impl.*.*(..))" id="pc"/>
+		<aop:advisor advice-ref="advice" pointcut-ref="pc"/>
+	</aop:config>
+</beans>
